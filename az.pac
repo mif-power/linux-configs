@@ -1,13 +1,12 @@
 function FindProxyForURL(url, host) {
   // our local URLs from the domains below example.com don't need a proxy:
-  if (shExpMatch(host, "127.0.0.1") || shExpMatch(host, "192.168.2.*")
+  if (shExpMatch(host, "127.0.0.1") || shExpMatch(host, "192.168.*")
    || shExpMatch(host, "*.ru") || shExpMatch(host, "*vk.com")) {
     return "DIRECT";
   }
 
-  // URLs within this network are accessed through
-  // port 8080 on fastproxy.example.com:
-  // if (isInNet(host, "10.0.0.0", "255.255.248.0")) {
+  // URLs within this domains are accessed
+  // through port 8080 on localhost socks proxy
   if (shExpMatch(host, "*.youtube.com") || shExpMatch(host, "*.youtu.be") || shExpMatch(host, "youtu.be")
   || shExpMatch(host, "*.googlevideo.com") || shExpMatch(host, "*.ytimg.com") || shExpMatch(host, "youtube.com")
   || shExpMatch(host, "*.chatgpt.com") || shExpMatch(host, "*.openai.com")
@@ -32,10 +31,15 @@ function FindProxyForURL(url, host) {
     return "SOCKS 127.0.0.1:8080";
   }
 
+  // Proxy by default
   // All other requests go through port 8080 of proxy.example.com.
-  // should that fail to respond, go directly to the WWW:
-
+  // should that fail to respond, go
+  // through port 8080 on localhost socks proxy
   return "SOCKS 127.0.0.1:8080";
+
+  // Direct by default
+  // directly to the WWW:
+  // URLs within this domains are accessed through
   // return "DIRECT";
 
   //return "PROXY proxy.example.com:8080; DIRECT";
