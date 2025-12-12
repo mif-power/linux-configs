@@ -157,7 +157,9 @@ set laststatus=2
 #		set langmap=!\\"№\\;%?*ёйцукенгшщзхъфывапролджэячсмитьбюЁЙЦУКЕHГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ;!@#$%&*`qwertyuiop[]asdfghjkl\\;\'zxcvbnm\\,.~QWERTYUIOP{}ASDFG
 
 		echo "colorscheme desert
-		aunmenu ToolBar.Print">~/.gvimrc
+aunmenu ToolBar.Print
+    
+set guifont=Monospace\ 14">~/.gvimrc
 #set softtabstop=2
 }
 
