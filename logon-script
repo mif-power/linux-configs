@@ -14,7 +14,7 @@ alias docker-rm-untagged="docker rmi $(docker images --filter "dangling=true" -q
 
 function purge-locales
 {
-	apt-install localepurge
+	install localepurge
 }
 
 function ping-and-ssh
@@ -67,7 +67,7 @@ function monitor-result
 	while true; do date; "$@"; sleep 1; clear; done
 }
 
-function apt-install
+function install
 {
 	sudo -E apt-get install "$@" -y --fix-missing
 }
@@ -104,22 +104,37 @@ function file-content-search
 
 function gui-setup
 {
-	sudo apt-get install chromium-browser gxneur vim-gnome dropbox nemo-dropbox vritualbox htop traceroute opera htop -y
-	sudo add-apt-repository ppa:slytomcat/ppa
-	sudo apt-get update
-	sudo apt-get install yd-tools -y
+	update
+	sudo apt-get install chromium-browser vim-gnome vritualbox htop traceroute opera htop -y
 	#rm -v ~/.local/share/keyrings/*.keyring
 }
 
 function dev-install
 {
-	apt-install python3-dev build-essential python3-pip libssl-dev git
-	sudo -H pip3 install -U pip
+	install python3-pip git gh
+  # Add Docker's official GPG key:
+  sudo apt install ca-certificates curl
+  sudo install -m 0755 -d /etc/apt/keyrings
+  sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+  # Add the repository to Apt sources:
+  sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+  Types: deb
+  URIs: https://download.docker.com/linux/ubuntu
+  Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+  Components: stable
+  Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+  update
+  install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  sudo systemctl start docker
 }
 
 function vim-setup
 {
-	apt-install vim
+	install vim
 
 echo 'syntax on
 set ignorecase
@@ -173,24 +188,6 @@ function no-sudo-pass
 	%root ALL=NOPASSWD: ALL" | sudo tee -a /etc/sudoers
 }
 
-function ntp-client-setup
-{
-	apt-install ntp && echo "server 192.168.77.2 \
-		restrict 192.168.77.2 \
-		restrict 127.0.0.1">>/etc/ntp.conf
-
-	sudo update-rc.d ntp enable
-	sudo /etc/init.d/ntp restart
-}
-
-function hostname-setup
-{
-	hostname=`cat /etc/hostname`
-	if [ -z $1 ] ; then echo "No machine name set"; exit 1; fi
-	echo "$1" | sudo tee /etc/hostname
-	sudo sed -i "s/$hostname/$1/" /etc/hosts
-}
-
 nfs_share=192.168.77.8
 function nfs-setup
 {
@@ -212,7 +209,7 @@ function boot-images-setup
 	sudo mount /mnt/boot_images
 }
 
-export proxy="http://192.168.10.1:8080"
+export proxy="socks5://127.0.0.1:8080"
 function enable-proxy
 {
 	export no_proxy="localhost,127.*,192.168.*,*.local"
@@ -251,24 +248,12 @@ function pull-with-stash-locals
 
 backup_script=/etc/cron.daily/profile-backup
 function profile-backup {
-  backup_file="$HOME/Yandex.Disk/Configs/profile_configs/$hostname/$hostname-profile-backup.tar.gz"
+  backup_file="$HOME/profile_backups/$hostname-profile-backup.tar.gz"
   mkdir -p `dirname "$backup_file"`
 	printf "#!/bin/bash\n\n# Backup $USER's profile data\ncd $HOME\ndate > .profile_backup.dt\nfind . -maxdepth 1 -path './.*' -a -not -path './.local' -a -not -path \
 	'./.cache' -a -not -path './.java' -a -not -path './.mozilla'	| sudo -u $USER tar -cvz -f $backup_file -T -\n" | sudo tee "$backup_script"
 	sudo chmod a+x $backup_script
 }
-
-#ifconfig=`sudo ifconfig||ifconfig`
-#proxy_on=`echo $ifconfig|grep -e 'inet addr:192\.168\.10\.' -e 'inet addr:192\.168\.77\.'`
-#proxy_bypass=`echo $ifconfig|grep -e 'inet addr:192\.168\.10\.68' -e 'inet addr:192\.168\.77\.100' -e 'inet addr:192\.168\.100'`
-#if [ -n "$proxy_on" -a -z "$proxy_bypass" ]; then
-#	echo 'Proxified IP detected. Enabling proxy...'
-##fi
-#else
-##if [ -n "$proxy_bypass" ]; then
-#	echo 'IP not in proxified list'
-#	#echo 'Disabling proxy...' && disable-proxy
-#fi
 
 soft_folder=$HOME/soft
 local_common_modules="$soft_folder/CommonModules"
