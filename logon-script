@@ -1,16 +1,9 @@
 #!/bin/bash
 
-[ -f /usr/share/landscape/landscape-sysinfo.wrapper ] && /usr/share/landscape/landscape-sysinfo.wrapper
-
-samba_mount_flags="auto,rw,user,username=1,password=1,nounix,noperm,nobrl,sec=lanman,iocharset=utf8"
-
 function mkcd { mkdir -p "$@" ; cd "$1" ;}
 function mnt-create { sudo mkdir "$2" ; sudo mount "$@" ;}
 function smb-mount { mount "$@" -t cifs -o $samba_mount_flags;}
 function smb-mnt-create { mnt-create "$@" -t cifs -o $samba_mount_flags;}
-
-alias docker-rm-exited='docker ps -q -f status=exited | xargs docker rm'
-alias docker-rm-untagged="docker rmi $(docker images --filter "dangling=true" -q)"
 
 function purge-locales
 {
@@ -209,7 +202,6 @@ function boot-images-setup
 	sudo mount /mnt/boot_images
 }
 
-export proxy="socks5://127.0.0.1:8080"
 function enable-proxy
 {
 	export no_proxy="localhost,127.*,192.168.*,*.local"
@@ -263,6 +255,13 @@ fi
 
 VISUAL="vim" ; export VISUAL
 EDITOR="$VISUAL" ; export EDITOR
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 
@@ -280,17 +279,17 @@ alias ll='ls -lh --group-directories-first'
 alias ld='ls -ld'
 #alias la='ls -A'
 #alias l='ls -CF'
-alias ssh-no-strict='ssh -o StrictHostKeyChecking=False'
 alias rm='rm -i'
 alias cd..='cd ..'
 alias ..='cd ..'
 alias .='pwd'
 
-# If not running interactively, don't do anything
-case $- in
-    *i*) ;;
-      *) return;;
-esac
+alias docker-rm-exited='docker ps -q -f status=exited | xargs docker rm'
+alias docker-rm-untagged="docker rmi $(docker images --filter "dangling=true" -q)"
+
+export proxy="socks5://127.0.0.1:8080"
+
+export samba_mount_flags="auto,rw,user,username=1,password=1,nounix,noperm,nobrl,sec=lanman,iocharset=utf8"
 
 # don't put duplicate lines or lines starting with space in the history.
 # See bash(1) for more options
@@ -424,7 +423,7 @@ if [ ! -L $rc_script ]; then
 		fi
 	fi
 else
-	echo "Login script is being automatically updated by Dropbox"
+	echo "Login script is being automatically updated"
 fi
 
 hostname=`hostname`
@@ -435,6 +434,8 @@ data_db_config_fld=$db_config_fld
 if [ -d $db_config_fld ] && [ ! -e $backup_script ]; then
   profile-backup
 fi
+
+[ -f /usr/share/landscape/landscape-sysinfo.wrapper ] && /usr/share/landscape/landscape-sysinfo.wrapper
 
 uname -ar
 uptime
