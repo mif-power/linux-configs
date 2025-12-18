@@ -240,9 +240,9 @@ function pull-with-stash-locals
 
 backup_script=/etc/cron.daily/profile-backup
 function profile-backup {
-  backup_file="$HOME/profile_backups/$hostname-profile-backup.tar.gz"
+  backup_file="$hostname-profile-backup.tar.gz"
   mkdir -p `dirname "$backup_file"`
-	printf "#!/bin/bash\n\n# Backup $USER's profile data\ncd $HOME\ndate > .profile_backup.dt\nfind . -maxdepth 1 -path './.*' -a -not -path './.local' -a -not -path \
+	printf "#!/bin/bash\n\n# Backup $USER's profile data\ncd $HOME/profile_backups/\ndate > .profile_backup.dt\nfind . -maxdepth 1 -path './.*' -a -not -path './.local' -a -not -path \
 	'./.cache' -a -not -path './.java' -a -not -path './.mozilla'	| sudo -u $USER tar -cvz -f $backup_file -T -\n" | sudo tee "$backup_script"
 	sudo chmod a+x $backup_script
 }
