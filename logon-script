@@ -240,11 +240,35 @@ function pull-with-stash-locals
 
 backup_script=/etc/cron.daily/profile-backup
 function profile-backup {
-  backup_file="$hostname-profile-backup.tar.gz"
-  mkdir -p `dirname "$backup_file"`
-	printf "#!/bin/bash\n\n# Backup $USER's profile data\ncd $HOME/profile_backups/\ndate > .profile_backup.dt\nfind . -maxdepth 1 -path './.*' -a -not -path './.local' -a -not -path \
-	'./.cache' -a -not -path './.java' -a -not -path './.mozilla'	| sudo -u $USER tar -cvz -f $backup_file -T -\n" | sudo tee "$backup_script"
-	sudo chmod a+x $backup_script
+  backup_dir=$HOME/profile_backups
+  backup_file="$backup_dir/$USER-profile-backup.tar.gz"
+  mkdir -p $backup_dir
+  sudo tee "$backup_script" <<EOF
+#!/bin/bash
+
+# Backup $USER's profile data
+username=$USER
+home=/home/\$username
+
+date > $backup_dir/.profile_backup.dt
+cd \$home
+find ./.[!.]* \
+  \( \
+    -path "./.local" \
+    -o -path "./.cache" \
+    -o -path "./.java" \
+    -o -path "./.mozilla" \
+    -o -path '*/File System' \
+    -o -path '*/Service Worker' \
+    -o -path '*/CacheStorage' \
+    -o -path '*/Cache_Data' \
+    -o -path '*/IndexedDB' \
+    -o -path '*/Code Cache' \
+    -o -path '*/Genymotion/deployed' \
+    -o -path '*/.gradle/caches' \
+  \) -prune -o -type f -print \
+  | sudo -u \$username tar -cvz -f $backup_file -T -
+EOF
 }
 
 soft_folder=$HOME/soft
