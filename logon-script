@@ -26,7 +26,7 @@ function create-new-script
     read $new_script
   fi 
 
-  printf "#!/bin/bash" > $new_script
+  printf "#!/bin/bash\n\n" > $new_script
   
   chmod a+x $new_script
   vim $new_script +3
@@ -238,10 +238,15 @@ function pull-with-stash-locals
 	git pull -X theirs || git reset --hard HEAD
 }
 
-backup_script=/etc/cron.daily/profile-backup
+backup_script=/etc/cron.monthly/profile-backup
 function profile-backup {
-  backup_dir=$HOME/profile_backups
+  sudo apt install at
+    
+  backup_dir=$HOME/Yandex.Disk/profile_backups
   backup_file="$backup_dir/$USER-profile-backup.tar.gz"
+  user_cmd='sudo -u $username'
+  yd_cmd="$user_cmd yandex-disk"
+
   mkdir -p $backup_dir
   sudo tee "$backup_script" <<EOF
 #!/bin/bash
@@ -249,8 +254,9 @@ function profile-backup {
 # Backup $USER's profile data
 username=$USER
 home=/home/\$username
+profile_sync_cron=/etc/cron.hourly/profile-sync
 
-date > $backup_dir/.profile_backup.dt
+date > $backup_dir/.profile_backup.dt.txt
 cd \$home
 find ./.[!.]* \
   \( \
@@ -265,9 +271,14 @@ find ./.[!.]* \
     -o -path '*/IndexedDB' \
     -o -path '*/Code Cache' \
     -o -path '*/Genymotion/deployed' \
+    -o -path '*/Genymotion/ova' \
     -o -path '*/.gradle/caches' \
   \) -prune -o -type f -print \
-  | sudo -u \$username tar -cvz -f $backup_file -T -
+  | $user_cmd tar -cvz -f $backup_file -T -
+
+echo "$yd_cmd start" > \$profile_sync_cron
+$yd_cmd start
+echo "rm -f \$profile_sync_cron; $yd_cmd stop" | at now + 3 hours
 EOF
 }
 
